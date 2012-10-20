@@ -121,7 +121,11 @@ module Aversion
   end
 
   # Public: Returns whether two versionable objects are equal.
+  #
+  # They will be equal as long as they have the same initial args with they were
+  # constructed with and their history is the same.
   def ==(other)
-    history == other.history
+    @initial_args == other.instance_variable_get(:@initial_args) &&
+      history == other.history
   end
 end

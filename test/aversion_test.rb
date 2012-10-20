@@ -72,4 +72,26 @@ describe Aversion do
       end
     end
   end
+
+  describe '#==' do
+    describe 'when two objects have the same history' do
+      describe 'and the same initial args' do
+        it 'returns true' do
+          (person.eat.rollback == person).must_equal true
+        end
+      end
+
+      describe 'but different initial args' do
+        it 'returns false' do
+          (Person.new(10) == person).must_equal false
+        end
+      end
+    end
+
+    describe 'when two objects differ in history' do
+      it 'returns false' do
+        (person.eat == person).must_equal false
+      end
+    end
+  end
 end

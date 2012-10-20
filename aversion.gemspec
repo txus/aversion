@@ -8,9 +8,9 @@ Gem::Specification.new do |gem|
   gem.version       = Aversion::VERSION
   gem.authors       = ["Josep M. Bach"]
   gem.email         = ["josep.m.bach@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Make your Ruby objects versionable}
+  gem.summary       = %q{Make your Ruby objects versionable}
+  gem.homepage      = "https://github.com/txus/aversion"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

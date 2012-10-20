@@ -12,7 +12,7 @@ of transformations, and apply it onto an arbitrary object.
 
 Add this line to your application's Gemfile:
 
-    gem 'aversion'
+    gem 'txus-aversion'
 
 And then execute:
 
@@ -20,7 +20,10 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install aversion
+    $ gem install txus-aversion
+
+Yeah, I know the name sucks. There is another gem called aversion so I have to
+prefix mine with my name :(
 
 ## Usage
 

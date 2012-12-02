@@ -50,8 +50,8 @@ module Aversion
         allocate.tap do |instance|
           instance.send :initialize, *args
           instance.instance_eval do
-            @transformations = []
-            @initial_args    = args
+            self.history = []
+            @__initial_args__ = args
           end
         end
       end
@@ -61,10 +61,10 @@ module Aversion
   # Public: Returns a mutable version of the object, in case anyone needs it. We
   # do need it internally to perform transformations.
   def mutable
-    self.class.new_mutable(*@initial_args).tap do |mutable|
+    self.class.new_mutable(*initial_args).tap do |mutable|
       instance_variables.each do |ivar|
         mutable.instance_variable_set(ivar, instance_variable_get(ivar))
-        mutable.instance_variable_set(:@transformations, @transformations.dup)
+        mutable.history = history.dup
       end
     end
   end
@@ -82,7 +82,7 @@ module Aversion
   #
   # Returns a new, immutable copy with the previous state.
   def rollback
-    self.class.new_mutable(*@initial_args).tap do |instance|
+    self.class.new_mutable(*initial_args).tap do |instance|
       instance.replay(history[0..-2])
     end.freeze
   end
@@ -103,13 +103,13 @@ module Aversion
 
   # Internal: Returns the history of this object.
   def history
-    @transformations
+    @__transformations__
   end
 
   # Internal: Sets the history of this object to a specific array fo
   # transformations.
   def history=(transformations)
-    @transformations = transformations
+    @__transformations__ = transformations
   end
 
   # Public: Returns the difference between two versioned objects, which is an
@@ -125,7 +125,12 @@ module Aversion
   # They will be equal as long as they have the same initial args with they were
   # constructed with and their history is the same.
   def ==(other)
-    @initial_args == other.instance_variable_get(:@initial_args) &&
-      history == other.history
+    initial_args == other.initial_args && history == other.history
+  end
+
+  # Public: Exposes the initial arguments passed to the constructor, for
+  # comparison purposes.
+  def initial_args
+    @__initial_args__
   end
 end

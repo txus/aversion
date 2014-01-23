@@ -38,25 +38,27 @@ require "aversion/version"
 module Aversion
   # Public: When we include Aversion, we override .new with an immutable
   # constructor and provide a .new_mutable version.
-  def self.included(base)
-    base.class_eval do
-      # Public: Initializes an immutable instance.
-      def self.new(*args)
-        new_mutable(*args).freeze
-      end
-
-      # Public: Initializes a mutable instance.
-      def self.new_mutable(*args)
-        allocate.tap do |instance|
-          instance.send :initialize, *args
-          instance.instance_eval do
-            self.history = []
-            @__initial_args__ = args
-          end
-        end
+  module ClassMethods
+    # Public: Initializes an immutable instance.
+    def new(*args)
+      new_mutable(*args).freeze
+    end
+    
+    # Public: Initializes a mutable instance.
+    def new_mutable(*args)
+      allocate.tap do |instance|
+        instance.send :initialize, *args
+        instance.initial_args = args
+        instance.history = []
       end
     end
   end
+  
+  def self.included(base)
+    base.send :extend, ClassMethods
+  end
+  
+  attr_accessor :history, :initial_args
 
   # Public: Returns a mutable version of the object, in case anyone needs it. We
   # do need it internally to perform transformations.
@@ -73,18 +75,14 @@ module Aversion
   #
   # Returns a new, immutable copy with the transformation applied.
   def transform(&block)
-    mutable.tap do |new_instance|
-      new_instance.replay([block.dup])
-    end.freeze
+    mutable.replay([block.dup])
   end
 
   # Public: Rolls back to a previous version of the state.
   #
   # Returns a new, immutable copy with the previous state.
   def rollback
-    self.class.new_mutable(*initial_args).tap do |instance|
-      instance.replay(history[0..-2])
-    end.freeze
+    self.class.new_mutable(*initial_args).replay(history[0..-2])
   end
 
   # Public: Replays an array of transformations (procs).
@@ -101,23 +99,10 @@ module Aversion
     end.freeze
   end
 
-  # Internal: Returns the history of this object.
-  def history
-    @__transformations__
-  end
-
-  # Internal: Sets the history of this object to a specific array fo
-  # transformations.
-  def history=(transformations)
-    @__transformations__ = transformations
-  end
-
   # Public: Returns the difference between two versioned objects, which is an
   # array of the transformations one lacks from the other.
   def -(other)
-    younger, older = [history, other.history].sort { |a,b| a.length <=> b.length }
-    difference     = (older.length - younger.length) - 1
-    older[difference..-1]
+    [history, other.history].sort_by(&:size).reverse.reduce(&:-)
   end
 
   # Public: Returns whether two versionable objects are equal.
@@ -126,11 +111,5 @@ module Aversion
   # constructed with and their history is the same.
   def ==(other)
     initial_args == other.initial_args && history == other.history
-  end
-
-  # Public: Exposes the initial arguments passed to the constructor, for
-  # comparison purposes.
-  def initial_args
-    @__initial_args__
   end
 end
